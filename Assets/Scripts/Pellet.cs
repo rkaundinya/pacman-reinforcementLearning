@@ -4,6 +4,7 @@ using UnityEngine;
 public class Pellet : MonoBehaviour
 {
     public int points = 10;
+    private bool eaten = false;
 
     protected virtual void Eat()
     {
@@ -12,8 +13,9 @@ public class Pellet : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        if (other.gameObject.layer == LayerMask.NameToLayer("Pacman")) {
+        if (!eaten && other.gameObject.layer == LayerMask.NameToLayer("Pacman")) {
             Eat();
+            eaten = true;
         }
     }
 

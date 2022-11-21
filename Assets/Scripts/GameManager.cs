@@ -11,6 +11,7 @@ public class GameManager : MonoBehaviour
     public Text scoreText;
     public Text livesText;
 
+    public static GameManager gm { get; private set; }
     public int ghostMultiplier { get; private set; } = 1;
     public int score { get; private set; }
     public int lives { get; private set; }
@@ -18,6 +19,7 @@ public class GameManager : MonoBehaviour
     private void Start()
     {
         NewGame();
+        gm = this;
     }
 
     private void Update()
@@ -100,7 +102,8 @@ public class GameManager : MonoBehaviour
 
     public void PelletEaten(Pellet pellet)
     {
-        pellet.gameObject.SetActive(false);
+        // pellet.gameObject.SetActive(false);
+        pellet.gameObject.GetComponent<SpriteRenderer>().enabled = false;
 
         SetScore(score + pellet.points);
 
