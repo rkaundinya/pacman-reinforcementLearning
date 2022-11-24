@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
@@ -12,14 +13,17 @@ public class GameManager : MonoBehaviour
     public Text livesText;
 
     public static GameManager gm { get; private set; }
+    public List<Vector2> powerPelletPositions { get; private set; }
     public int ghostMultiplier { get; private set; } = 1;
     public int score { get; private set; }
     public int lives { get; private set; }
 
     private void Start()
     {
-        NewGame();
         gm = this;
+        powerPelletPositions = new List<Vector2>();
+
+        NewGame();
     }
 
     private void Update()
@@ -42,6 +46,12 @@ public class GameManager : MonoBehaviour
 
         foreach (Transform pellet in pellets) {
             pellet.gameObject.SetActive(true);
+            
+            if (pellet.gameObject.GetComponent<PowerPellet>() != null)
+            {
+                powerPelletPositions.Add(pellet.position);
+                Debug.Log("Found Power Pellet");
+            }
         }
 
         ResetState();
