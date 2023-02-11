@@ -159,7 +159,6 @@ public class GameManager : MonoBehaviour
 
         if (!HasRemainingPellets())
         {
-            Debug.Log("Ate all pellets");
             roundWonEvent?.Invoke();
 
             // Remove pellet from hashtable

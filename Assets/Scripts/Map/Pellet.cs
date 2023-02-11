@@ -94,7 +94,6 @@ public class Pellet : MonoBehaviour
             eaten = true;
 
             activeBitmapCodes.Add(BitmapCode.Pacman, 1);
-            Debug.Log("Added pacman to pellet bitmap code");
 
             GameManager.gm.stateRepresentation.UpdateStateValue(currentLocation, BitmapCode.Pacman);
             return;
@@ -104,7 +103,7 @@ public class Pellet : MonoBehaviour
     private void OnTriggerExit2D(Collider2D other)
     {
         Vector3 currentLocation = gameObject.transform.position;
-        BitmapCode currentMaxBitmapCode = GetMaxCurrentStateBitmapCode();
+        BitmapCode removingCode = BitmapCode.None;
 
         // Update bitmap with ghost code
         if (other.gameObject.layer == LayerMask.NameToLayer("Ghost"))
@@ -116,86 +115,92 @@ public class Pellet : MonoBehaviour
                 // If ghost is eaten
                 if (ghostFrightened.eaten)
                 {
-                    if (activeBitmapCodes.Contains(BitmapCode.EatenGhost))
+                    removingCode = BitmapCode.EatenGhost;
+                    if (activeBitmapCodes.Contains(removingCode))
                     {
                         // Used to keep track of how many duplicate bitmap states tile is in
-                        int bitmapStateValCnt = (int)activeBitmapCodes[BitmapCode.EatenGhost];
+                        int bitmapStateValCnt = (int)activeBitmapCodes[removingCode];
 
                         // Either decrement count or remove state entirely from pellet's state tracking
                         if (bitmapStateValCnt > 1)
                         {
-                            activeBitmapCodes[BitmapCode.EatenGhost] = bitmapStateValCnt - 1;
+                            activeBitmapCodes[removingCode] = bitmapStateValCnt - 1;
                         }
                         else
                         {
-                            activeBitmapCodes.Remove(BitmapCode.EatenGhost);
+                            activeBitmapCodes.Remove(removingCode);
                         }
                     }
                     else
                     {
                         Debug.Log("Error - trying to remove non-existing pellet state");
                     }
-
-                    GameManager.gm.stateRepresentation.UpdateStateValue(currentLocation, currentMaxBitmapCode);
-                    return;
                 }
                 // Ghost is frightened but not eaten
                 else
                 {
-                    if (activeBitmapCodes.Contains(BitmapCode.FrightenedGhost))
+                    removingCode = BitmapCode.FrightenedGhost;
+                    if (activeBitmapCodes.Contains(removingCode))
                     {
                         // Used to keep track of how many duplicate bitmap states tile is in
-                        int bitmapStateValCnt = (int)activeBitmapCodes[BitmapCode.FrightenedGhost];
+                        int bitmapStateValCnt = (int)activeBitmapCodes[removingCode];
 
                         // Either decrement count or remove state entirely from pellet's state tracking
                         if (bitmapStateValCnt > 1)
                         {
-                            activeBitmapCodes[BitmapCode.FrightenedGhost] = bitmapStateValCnt - 1;
+                            activeBitmapCodes[removingCode] = bitmapStateValCnt - 1;
                         }
                         else
                         {
-                            activeBitmapCodes.Remove(BitmapCode.FrightenedGhost);
+                            activeBitmapCodes.Remove(removingCode);
                         }
                     }
                     else
                     {
                         Debug.Log("Error - trying to remove non-existing pellet state");
                     }
-
-                    GameManager.gm.stateRepresentation.UpdateStateValue(currentLocation, currentMaxBitmapCode);
-                    return;
                 }
             }
             else
             {
-                if (activeBitmapCodes.Contains(BitmapCode.Ghost))
+                removingCode = BitmapCode.Ghost;
+                if (activeBitmapCodes.Contains(removingCode))
                 {
-                    activeBitmapCodes[BitmapCode.Ghost] = (int)activeBitmapCodes[BitmapCode.Ghost] - 1;
+                    // Used to keep track of how many duplicate bitmap states tile is in
+                    int bitmapStateValCnt = (int)activeBitmapCodes[removingCode];
+
+                    // Either decrement count or remove state entirely from pellet's state tracking
+                    if (bitmapStateValCnt > 1)
+                    {
+                        activeBitmapCodes[removingCode] = bitmapStateValCnt - 1;
+                    }
+                    else
+                    {
+                        activeBitmapCodes.Remove(removingCode);
+                    }
                 }
                 else
                 {
                     Debug.Log("Error - trying to remove non-existing pellet state");
                 }
-
-                GameManager.gm.stateRepresentation.UpdateStateValue(currentLocation, currentMaxBitmapCode);
-                return;
             }
         }
         // Update bitmap with pacman code
         else if (other.gameObject.layer == LayerMask.NameToLayer("Pacman"))
         {
-            if (activeBitmapCodes.Contains(BitmapCode.Pacman))
+            removingCode = BitmapCode.Pacman;
+            if (activeBitmapCodes.Contains(removingCode))
             {
-                activeBitmapCodes.Remove(BitmapCode.Pacman);
+                activeBitmapCodes.Remove(removingCode);
             }
             else
             {
                 Debug.Log("Error - trying to remove non-existing pellet state");
             }
-
-            GameManager.gm.stateRepresentation.UpdateStateValue(currentLocation, currentMaxBitmapCode);
-            return;
         }
+
+        BitmapCode currentMaxBitmapCode = GetMaxCurrentStateBitmapCode();
+        GameManager.gm.stateRepresentation.DemoteStateValue(currentLocation, removingCode, currentMaxBitmapCode);
     }
 
     protected virtual BitmapCode GetMaxCurrentStateBitmapCode()

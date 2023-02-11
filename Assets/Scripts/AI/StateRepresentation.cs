@@ -70,6 +70,21 @@ public class StateRepresentation : MonoBehaviour
         return;
     }
 
+    public void DemoteStateValue(Vector3 location, BitmapCode oldVal, BitmapCode newVal)
+    {
+        if (!dnnBitMap.Contains(location))
+        {
+            Debug.Log("Error - trying to update an invalid bitmap location");
+            return;
+        }
+
+        if ((int)dnnBitMap[location] == (int)oldVal)
+        {
+            Debug.Log("Demoted to: " + newVal.ToString());
+            dnnBitMap[location] = newVal;
+        }
+    }
+
     public bool DebugCheckBitmapLoaction(Vector3 toCheck)
     {
         return dnnBitMap.Contains(toCheck);
