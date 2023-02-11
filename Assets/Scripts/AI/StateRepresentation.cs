@@ -5,6 +5,7 @@ using UnityEngine.Tilemaps;
 
 public enum BitmapCode
 {
+    None,
     Wall,
     Pellet,
     PowerPellet,
@@ -36,25 +37,42 @@ public class StateRepresentation : MonoBehaviour
             {
                 tileCode = BitmapCode.Wall;   
             }
-            else if (tileMap.gameObject.layer == LayerMask.NameToLayer("Pellet"))
+            else
             {
-                tileCode = BitmapCode.Pellet;
-            }
-
-            foreach (Vector3Int position in tileMap.cellBounds.allPositionsWithin)
-            {
-                if (!tileMap.HasTile(position))
-                {
-                    continue;
-                }
-
-                dnnBitMap.Add(tileMap.GetCellCenterWorld(position), tileCode);
-                if (tileCode == BitmapCode.Wall)
-                {
-                    Debug.DrawRay(tileMap.GetCellCenterWorld(position), Vector2.up, Color.red, 60);
-                }
+                continue;
             }
         }
+    }
+
+    public void AddToBitmap(Vector3 location, BitmapCode type)
+    {
+        if (!dnnBitMap.Contains(location))
+        {
+            dnnBitMap.Add(location, type);
+        }
+    }
+
+    public void UpdateStateValue(Vector3 location, BitmapCode newVal)
+    {
+        if (!dnnBitMap.Contains(location))
+        {
+            Debug.Log("Error - trying to update an invalid bitmap location");
+            return;
+        }
+
+        // Only update bitmap value if incoming value is greater than current
+        if ((int)newVal > (int)dnnBitMap[location])
+        {
+            Debug.Log(newVal.ToString());
+            dnnBitMap[location] = newVal;
+        }
+
+        return;
+    }
+
+    public bool DebugCheckBitmapLoaction(Vector3 toCheck)
+    {
+        return dnnBitMap.Contains(toCheck);
     }
 
     // Update is called once per frame
