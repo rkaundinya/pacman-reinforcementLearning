@@ -69,7 +69,7 @@ public class GameManager : MonoBehaviour
         gameOverText.enabled = false;
 
         foreach (Transform pellet in pellets) {
-            pellet.gameObject.SetActive(true);
+            pellet.gameObject.GetComponent<SpriteRenderer>().enabled = true;
             pellet.GetComponent<Pellet>().Reset();
             activePelletLocations.Add(pellet.position, "");
         }
@@ -151,7 +151,8 @@ public class GameManager : MonoBehaviour
             pelletEatenEvent?.Invoke();
         }
 
-        pellet.gameObject.SetActive(false);
+        // pellet.gameObject.SetActive(false);
+        pellet.gameObject.GetComponent<SpriteRenderer>().enabled = false;
         activePelletLocations.Remove(pellet.transform.position);
 
         SetScore(score + pellet.points);
@@ -187,7 +188,7 @@ public class GameManager : MonoBehaviour
     {
         foreach (Transform pellet in pellets)
         {
-            if (pellet.gameObject.activeSelf) {
+            if (pellet.gameObject.GetComponent<SpriteRenderer>().enabled) {
                 return true;
             }
         }
