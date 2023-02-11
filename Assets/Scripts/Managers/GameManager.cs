@@ -1,9 +1,17 @@
 using UnityEngine;
 using System.Collections.Generic;
+using System.Collections;
 using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
+    public delegate void PelletEatenEvent();
+    public delegate void PowerPelletEatenEvent();
+    public delegate void PowerPelletWornOff();
+    public delegate void LostLife();
+    public delegate void GhostEatenEvent();
+    public delegate void RoundWonEvent();
+
     public Ghost[] ghosts;
     public Pacman pacman;
     public Transform pellets;
@@ -12,16 +20,32 @@ public class GameManager : MonoBehaviour
     public Text scoreText;
     public Text livesText;
 
+    [Min(1)]
+    public int numLives;
+
     public static GameManager gm { get; private set; }
-    public List<Vector2> powerPelletPositions { get; private set; }
+    public PelletEatenEvent pelletEatenEvent;
+    public PowerPelletEatenEvent powerPelletEatenEvent;
+    public PowerPelletWornOff powerPelletWornOff;
+    public LostLife lostLife;
+    public GhostEatenEvent ghostEatenEvent;
+    public RoundWonEvent roundWonEvent;
     public int ghostMultiplier { get; private set; } = 1;
     public int score { get; private set; }
     public int lives { get; private set; }
+    public bool infiniteLives = false;
+    public Hashtable activePelletLocations { get; private set; }
+    public StateRepresentation stateRepresentation;
+
+    private void Awake()
+    {
+        gm = this;
+        stateRepresentation = GetComponent<StateRepresentation>();
+    }
 
     private void Start()
     {
-        gm = this;
-        powerPelletPositions = new List<Vector2>();
+        activePelletLocations = new Hashtable();
 
         NewGame();
     }
@@ -36,7 +60,7 @@ public class GameManager : MonoBehaviour
     private void NewGame()
     {
         SetScore(0);
-        SetLives(3);
+        SetLives(numLives);
         NewRound();
     }
 
@@ -46,24 +70,25 @@ public class GameManager : MonoBehaviour
 
         foreach (Transform pellet in pellets) {
             pellet.gameObject.SetActive(true);
-            
-            if (pellet.gameObject.GetComponent<PowerPellet>() != null)
-            {
-                powerPelletPositions.Add(pellet.position);
-                Debug.Log("Found Power Pellet");
-            }
+            pellet.GetComponent<Pellet>().Reset();
+            activePelletLocations.Add(pellet.position, "");
         }
 
         ResetState();
     }
 
-    private void ResetState()
+    public void ResetState()
     {
         for (int i = 0; i < ghosts.Length; i++) {
             ghosts[i].ResetState();
         }
 
         pacman.ResetState();
+    }
+
+    public void BroadcastPowerPelletWornOff()
+    {
+        powerPelletWornOff?.Invoke();
     }
 
     private void GameOver()
@@ -93,7 +118,12 @@ public class GameManager : MonoBehaviour
     {
         pacman.DeathSequence();
 
-        SetLives(lives - 1);
+        lostLife?.Invoke();
+
+        if (!infiniteLives)
+        {
+            SetLives(lives - 1);
+        }
 
         if (lives > 0) {
             Invoke(nameof(ResetState), 3f);
@@ -104,21 +134,37 @@ public class GameManager : MonoBehaviour
 
     public void GhostEaten(Ghost ghost)
     {
+        ghostEatenEvent?.Invoke();
+
         int points = ghost.points * ghostMultiplier;
         SetScore(score + points);
 
         ghostMultiplier++;
     }
 
-    public void PelletEaten(Pellet pellet)
+    // @triggerPelletEvent - toggle whether we want pellet eaten event to fire 
+    // (used when power pellet consumed and we don't want double events)
+    public void PelletEaten(Pellet pellet, bool triggerPelletEvent = true)
     {
-        // pellet.gameObject.SetActive(false);
-        pellet.gameObject.GetComponent<SpriteRenderer>().enabled = false;
+        if (triggerPelletEvent)
+        {
+            pelletEatenEvent?.Invoke();
+        }
+
+        pellet.gameObject.SetActive(false);
+        activePelletLocations.Remove(pellet.transform.position);
 
         SetScore(score + pellet.points);
 
         if (!HasRemainingPellets())
         {
+            Debug.Log("Ate all pellets");
+            roundWonEvent?.Invoke();
+
+            // Remove pellet from hashtable
+            activePelletLocations.Remove(pellet.transform.position);
+
+            
             pacman.gameObject.SetActive(false);
             Invoke(nameof(NewRound), 3f);
         }
@@ -126,11 +172,13 @@ public class GameManager : MonoBehaviour
 
     public void PowerPelletEaten(PowerPellet pellet)
     {
+        powerPelletEatenEvent?.Invoke();
+
         for (int i = 0; i < ghosts.Length; i++) {
             ghosts[i].frightened.Enable(pellet.duration);
         }
 
-        PelletEaten(pellet);
+        PelletEaten(pellet, false);
         CancelInvoke(nameof(ResetGhostMultiplier));
         Invoke(nameof(ResetGhostMultiplier), pellet.duration);
     }

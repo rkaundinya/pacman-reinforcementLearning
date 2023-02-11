@@ -29,6 +29,8 @@ public abstract class GhostBehavior : MonoBehaviour
         enabled = false;
 
         CancelInvoke();
+
+        GameManager.gm.BroadcastPowerPelletWornOff();
     }
 
 }

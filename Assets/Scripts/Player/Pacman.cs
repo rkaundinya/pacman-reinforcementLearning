@@ -1,20 +1,30 @@
 using UnityEngine;
 
 [RequireComponent(typeof(Movement))]
-public class Pacman : MonoBehaviour
+public class Pacman : MonoBehaviour, IAIMover
 {
     public bool isAIControlled = false;
+    public float WinningReward = 100f;
+    public float DeathReward = -100f;
 
     public AnimatedSprite deathSequence;
     public SpriteRenderer spriteRenderer { get; private set; }
     public new Collider2D collider { get; private set; }
     public Movement movement { get; private set; }
 
+    public RLPLanner planner { get; private set; }
+
     private void Awake()
     {
         spriteRenderer = GetComponent<SpriteRenderer>();
         collider = GetComponent<Collider2D>();
         movement = GetComponent<Movement>();
+
+        if (isAIControlled)
+        {
+            this.enabled = false;
+            planner = GetComponent<RLPLanner>();
+        }
     }
 
     private void Update()
@@ -38,6 +48,15 @@ public class Pacman : MonoBehaviour
         transform.rotation = Quaternion.AngleAxis(angle * Mathf.Rad2Deg, Vector3.forward);
     }
 
+    public void Move(Vector2 direction)
+    {
+        movement.SetDirection(direction);
+
+        // Rotate pacman to face the movement direction
+        float angle = Mathf.Atan2(movement.direction.y, movement.direction.x);
+        transform.rotation = Quaternion.AngleAxis(angle * Mathf.Rad2Deg, Vector3.forward);
+    }
+
     public void ResetState()
     {
         enabled = true;
@@ -51,6 +70,11 @@ public class Pacman : MonoBehaviour
 
     public void DeathSequence()
     {
+        if (planner != null)
+        {
+            planner.UpdateWithReward(transform.position, DeathReward);
+        }
+
         enabled = false;
         spriteRenderer.enabled = false;
         collider.enabled = false;
