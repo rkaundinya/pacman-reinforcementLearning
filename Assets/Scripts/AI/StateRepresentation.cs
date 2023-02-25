@@ -5,14 +5,14 @@ using UnityEngine.Tilemaps;
 
 public enum BitmapCode
 {
-    None,
-    Wall,
-    Pellet,
-    PowerPellet,
-    EatenGhost,
-    FrightenedGhost,
-    Ghost,
-    Pacman,
+    None,               //=0
+    Wall,               //=1
+    Pellet,             //=2
+    PowerPellet,        //=3
+    EatenGhost,         //=4
+    FrightenedGhost,    //=5
+    Ghost,              //=6
+    Pacman,             //=7
 }
 
 public class StateRepresentation : MonoBehaviour
@@ -30,18 +30,35 @@ public class StateRepresentation : MonoBehaviour
 
         tileMaps = grid.gameObject.GetComponentsInChildren<Tilemap>();
 
-        BitmapCode tileCode = BitmapCode.Wall;
         foreach (Tilemap tileMap in tileMaps)
         {
             if (tileMap.gameObject.layer == LayerMask.NameToLayer("Obstacle"))
             {
-                tileCode = BitmapCode.Wall;   
+                foreach (Vector3Int position in tileMap.cellBounds.allPositionsWithin)
+                {
+                    if (!tileMap.HasTile(position))
+                    {
+                        continue;
+                    }
+
+                    dnnBitMap.Add(tileMap.GetCellCenterWorld(position), BitmapCode.Wall);
+                }
             }
             else
             {
                 continue;
             }
         }
+    }
+
+    public BitmapCode GetCurrentBitmapLocationVal(Vector3 location)
+    {
+        if (dnnBitMap.Contains(location))
+        {
+            return (BitmapCode)dnnBitMap[location];
+        }
+
+        return BitmapCode.None;
     }
 
     public void AddToBitmap(Vector3 location, BitmapCode type)
@@ -63,7 +80,6 @@ public class StateRepresentation : MonoBehaviour
         // Only update bitmap value if incoming value is greater than current
         if ((int)newVal > (int)dnnBitMap[location])
         {
-            Debug.Log(newVal.ToString());
             dnnBitMap[location] = newVal;
         }
 
@@ -80,7 +96,6 @@ public class StateRepresentation : MonoBehaviour
 
         if ((int)dnnBitMap[location] == (int)oldVal)
         {
-            Debug.Log("Demoted to: " + newVal.ToString());
             dnnBitMap[location] = newVal;
         }
     }
@@ -90,9 +105,22 @@ public class StateRepresentation : MonoBehaviour
         return dnnBitMap.Contains(toCheck);
     }
 
-    // Update is called once per frame
-    void Update()
+    public int[] GetBitcodeMap()
     {
-        
+        int[] toReturn = new int[dnnBitMap.Keys.Count];
+
+        int idx = 0;
+        foreach (var val in dnnBitMap.Values)
+        {
+            toReturn[idx] = (int)val;
+            idx++;
+        }
+
+        return toReturn;
+    }
+
+    public void DebugPrintNumStatesInBitmap()
+    {
+        Debug.Log("NumOfBitmapStates" + dnnBitMap.Keys.Count);
     }
 }

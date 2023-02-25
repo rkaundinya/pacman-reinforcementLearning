@@ -397,7 +397,6 @@ GameObject:
   m_Component:
   - component: {fileID: 468613730}
   - component: {fileID: 468613729}
-  - component: {fileID: 468613731}
   m_Layer: 0
   m_Name: Grid
   m_TagString: Untagged
@@ -435,18 +434,6 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &468613731
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 468613728}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 90c3d33fc0f077146863e9618c64f28c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &469897150
 GameObject:
   m_ObjectHideFlags: 0
@@ -487,6 +474,7 @@ MonoBehaviour:
   numLives: 100
   infiniteLives: 1
   stateRepresentation: {fileID: 0}
+  resetScoreOnNewRound: 1
 --- !u!4 &469897152
 Transform:
   m_ObjectHideFlags: 0
@@ -3159,7 +3147,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 691530665}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f44b325d3c62e7c408971a3906007041, type: 3}
   m_Name: 
@@ -3171,8 +3159,8 @@ MonoBehaviour:
   rewardData:
     pelletReward: 1
     powerPelletReward: 5
-    eatenReward: -10
-    ghostEatenReward: -3
+    eatenReward: -15
+    ghostEatenReward: 3
     winReward: 50
     lastPelletEatTimePenaltyThreshold: 2
     pelletEatTimePenalty: -1
@@ -3220,7 +3208,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_BrainParameters:
-    VectorObservationSize: 6
+    VectorObservationSize: 164
     NumStackedVectorObservations: 1
     m_ActionSpec:
       m_NumContinuousActions: 0
@@ -3249,8 +3237,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a5c9d521e5ef4759a8246a07d52221e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  DecisionPeriod: 5
-  TakeActionsBetweenDecisions: 1
+  DecisionPeriod: 3
+  TakeActionsBetweenDecisions: 0
 --- !u!1 &1651544308
 GameObject:
   m_ObjectHideFlags: 0

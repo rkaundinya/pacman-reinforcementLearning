@@ -21,6 +21,7 @@ public class Pellet : MonoBehaviour
     protected virtual void RegisterWithBitmap()
     {
         activeBitmapCodes.Add(BitmapCode.Pellet, 0);
+
         GameManager.gm.stateRepresentation.AddToBitmap(gameObject.transform.position, BitmapCode.Pellet);
     }
 
@@ -90,8 +91,11 @@ public class Pellet : MonoBehaviour
         else if (other.gameObject.layer == LayerMask.NameToLayer("Pacman"))
         {
             // Consume pellet
-            Eat();
-            eaten = true;
+            if (!eaten)
+            {
+                Eat();
+                eaten = true;
+            }
 
             activeBitmapCodes.Add(BitmapCode.Pacman, 1);
 

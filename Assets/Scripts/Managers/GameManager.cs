@@ -35,7 +35,12 @@ public class GameManager : MonoBehaviour
     public int lives { get; private set; }
     public bool infiniteLives = false;
     public Hashtable activePelletLocations { get; private set; }
+    [HideInInspector]
     public StateRepresentation stateRepresentation;
+
+    [SerializeField]
+    private bool resetScoreOnNewRound = false;
+    private bool firstLaunch = true;
 
     private void Awake()
     {
@@ -66,6 +71,11 @@ public class GameManager : MonoBehaviour
 
     private void NewRound()
     {
+        if (resetScoreOnNewRound)
+        {
+            SetScore(0);
+        }
+
         gameOverText.enabled = false;
 
         foreach (Transform pellet in pellets) {

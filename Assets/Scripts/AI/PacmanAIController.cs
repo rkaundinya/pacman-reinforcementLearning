@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Unity.MLAgents;
@@ -24,7 +23,6 @@ public class PacmanAIController : Agent
     public RewardDataTemplate rewardData;
     private RLPLanner rlplanner;
     private Dictionary<int, Vector2> actionMap;
-    private float lastPelletEatTime = 0f;
 
     private void Awake()
     {
@@ -42,62 +40,53 @@ public class PacmanAIController : Agent
         GameManager.gm.pelletEatenEvent = () =>
         {
             SetReward(rewardData.pelletReward);
+            Debug.Log("Pellet eaten reward " + rewardData.pelletReward);
         };
 
         GameManager.gm.lostLife = () =>
         {
             SetReward(rewardData.eatenReward);
-            lastPelletEatTime = Time.time;
             Debug.Log("Lost Life - rewarded " + rewardData.eatenReward);
         };
 
         GameManager.gm.powerPelletEatenEvent = () =>
         {
             SetReward(rewardData.powerPelletReward);
-            lastPelletEatTime = Time.time;
+            Debug.Log("Power Pellet eaten reward " + rewardData.powerPelletReward);
         };  
 
         GameManager.gm.ghostEatenEvent = () =>
         {
             SetReward(rewardData.ghostEatenReward);
+            Debug.Log("Ghost eaten reward - " + rewardData.ghostEatenReward);
         };
 
         GameManager.gm.roundWonEvent = () =>
         {
             SetReward(rewardData.winReward);
+            Debug.Log("Round won reward " + rewardData.winReward);
         };
-
-        InvokeRepeating(nameof(CheckLastPelletEatTime), 0, rewardData.lastPelletEatTimePenaltyThreshold);
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
     }
 
     public override void OnEpisodeBegin()
     {
         // Reset characters to initial positions on new episode
+        Debug.Log("Episode began");
         GameManager.gm.ResetState();
     }
 
     public override void CollectObservations(VectorSensor sensor)
     {
-        float[] features = rlplanner.GetDNNStateRepresentation(pacman.gameObject.transform.position);
-        foreach (float feature in features)
+        int[] bitmap = GameManager.gm.stateRepresentation.GetBitcodeMap();
+        foreach (int bitCode in bitmap)
         {
-            sensor.AddObservation(feature);
+            sensor.AddObservation(bitCode);
         }
-
-        Debug.Log("Added features");
     }
 
     public override void OnActionReceived(ActionBuffers actions)
     {
         ActionSegment<int> discreteActions = actions.DiscreteActions;
-
-        Debug.Log("ActionAmt:" + discreteActions[0]);
 
         pacman.Move(actionMap[discreteActions[0]]);
     }
@@ -117,19 +106,5 @@ public class PacmanAIController : Agent
         int numActions = actions.Count;
         int actionIdx = Random.Range(0, numActions - 1);
         return actions[actionIdx];
-    }
-
-    // Gives penalty for not eating pellets for too long
-    // Also resets lastPelletEatTime to currentTime if above time threshold
-    private void CheckLastPelletEatTime()
-    {
-        float currentTime = Time.time;
-        float timeDiff = currentTime - lastPelletEatTime;
-        if (timeDiff > rewardData.lastPelletEatTimePenaltyThreshold)
-        {
-            SetReward(rewardData.pelletEatTimePenalty);
-            Debug.Log("Last pellet eaten penalty " + rewardData.pelletEatTimePenalty);
-            lastPelletEatTime = currentTime;
-        }
     }
 }
