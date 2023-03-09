@@ -156,6 +156,8 @@ public class GameManager : MonoBehaviour
     // (used when power pellet consumed and we don't want double events)
     public void PelletEaten(Pellet pellet, bool triggerPelletEvent = true)
     {
+        Debug.Log("Total bitmap Count: " + stateRepresentation.GetBitcodeMap().Length);
+
         if (triggerPelletEvent)
         {
             pelletEatenEvent?.Invoke();

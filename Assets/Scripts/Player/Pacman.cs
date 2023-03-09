@@ -27,6 +27,13 @@ public class Pacman : MonoBehaviour, IAIMover
         }
     }
 
+    private void Start()
+    {
+        Vector3 currentPos = gameObject.transform.position;
+
+        GameManager.gm.stateRepresentation.AddToBitmap(currentPos, BitmapCode.Pacman);
+    }
+
     private void Update()
     {
         // Set the new direction based on the current input

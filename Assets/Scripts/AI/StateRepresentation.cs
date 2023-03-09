@@ -17,15 +17,26 @@ public enum BitmapCode
 
 public class StateRepresentation : MonoBehaviour
 {
+    public Vector3 gridTopLeft = new Vector3(-13.5f, -5.5f, 0f);
+    public Vector3 gridBottomRight = new Vector3(-0.5f, -16.5f, 0f);
+    public int mapGridRows = 12;
+    public int mapGridCols = 14;
+
     [SerializeField]
     private Grid grid;
     private Tilemap[] tileMaps;
     // Bitmap representation of game to feed RL DNN
     private Hashtable dnnBitMap;
+    //Array bitmap representation (ordered)
+    private BitmapCode[] orderedBitmap;
 
     // Start is called before the first frame update
     void Awake()
     {
+        orderedBitmap = new BitmapCode[mapGridRows * mapGridCols];
+
+
+
         dnnBitMap = new Hashtable();
 
         tileMaps = grid.gameObject.GetComponentsInChildren<Tilemap>();
@@ -41,6 +52,25 @@ public class StateRepresentation : MonoBehaviour
                         continue;
                     }
 
+                    Vector3 centeredPos = tileMap.GetCellCenterWorld(position);
+                    if (position == new Vector3(-14, -6, 0))
+                    {
+                        Debug.Log(centeredPos);
+                    }
+
+                    // How to convert position to flatttened array index
+                    if (centeredPos == new Vector3(-13.5f, -5.5f, 0) || centeredPos == new Vector3(-0.5f, -16.5f, 0f))
+                    {
+                        int colIdx = (int)(Mathf.Abs(centeredPos.x - gridTopLeft.x));
+                        int rowIdx = (int)(Mathf.Abs(centeredPos.y - gridTopLeft.y));
+
+                        Debug.Log("Gridmap Position: (" + rowIdx + "," + colIdx + ")");
+
+                        int bitmapIdx = (rowIdx * mapGridCols) + colIdx;
+                        Debug.Log("Bitmap Idx: " + bitmapIdx);
+                        orderedBitmap[bitmapIdx] = BitmapCode.Wall;
+                    }
+
                     dnnBitMap.Add(tileMap.GetCellCenterWorld(position), BitmapCode.Wall);
                 }
             }
@@ -48,6 +78,20 @@ public class StateRepresentation : MonoBehaviour
             {
                 continue;
             }
+        }
+
+        // How to split flattened array back into row/column pairing
+        int idx = 0;
+        foreach (BitmapCode code in orderedBitmap)
+        {
+            if (code == BitmapCode.Wall)
+            {
+                int colIdx = idx % 14;
+                int rowIdx = idx / 14;
+                Debug.Log("Wall index is (" + rowIdx + "," + colIdx + ")");
+            }
+
+            idx++;
         }
     }
 
