@@ -14,6 +14,9 @@ public class Pacman : MonoBehaviour, IAIMover
 
     public RLPLanner planner { get; private set; }
 
+    [HideInInspector]
+    public Vector3 startingPos;
+
     private void Awake()
     {
         spriteRenderer = GetComponent<SpriteRenderer>();
@@ -25,13 +28,14 @@ public class Pacman : MonoBehaviour, IAIMover
             this.enabled = false;
             planner = GetComponent<RLPLanner>();
         }
+
+        startingPos = gameObject.transform.position;
+        startingPos = new Vector3(startingPos.x, startingPos.y, 0);
     }
 
     private void Start()
     {
-        Vector3 currentPos = gameObject.transform.position;
-
-        GameManager.gm.stateRepresentation.AddToBitmap(currentPos, BitmapCode.Pacman);
+        GameManager.gm.stateRepresentation.AddToBitmap(startingPos, BitmapCode.Pacman);
     }
 
     private void Update()
@@ -73,6 +77,9 @@ public class Pacman : MonoBehaviour, IAIMover
         deathSequence.spriteRenderer.enabled = false;
         movement.ResetState();
         gameObject.SetActive(true);
+
+        GameManager.gm.stateRepresentation.UpdateStateValue(startingPos, BitmapCode.Pacman);
+        GameManager.gm.pacmanStateReset?.Invoke();
     }
 
     public void DeathSequence()

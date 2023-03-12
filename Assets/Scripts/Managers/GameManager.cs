@@ -11,6 +11,7 @@ public class GameManager : MonoBehaviour
     public delegate void LostLife();
     public delegate void GhostEatenEvent();
     public delegate void RoundWonEvent();
+    public delegate void PacmanStateReset();
 
     public Ghost[] ghosts;
     public Pacman pacman;
@@ -30,6 +31,7 @@ public class GameManager : MonoBehaviour
     public LostLife lostLife;
     public GhostEatenEvent ghostEatenEvent;
     public RoundWonEvent roundWonEvent;
+    public PacmanStateReset pacmanStateReset;
     public int ghostMultiplier { get; private set; } = 1;
     public int score { get; private set; }
     public int lives { get; private set; }

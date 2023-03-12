@@ -1,35 +1,48 @@
-using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
 
-[RequireComponent(typeof(Collider2D))]
-public class Pellet : MonoBehaviour
+public class TrackerTile : MonoBehaviour
 {
-    public int points = 10;
-    private bool eaten = false;
-    protected Hashtable activeBitmapCodes;
+    private Hashtable activeBitmapCodes;
+    private bool pacmanStartingTile = false;
 
-    public void Awake()
+    private void Awake()
     {
         activeBitmapCodes = new Hashtable();
     }
 
-    public void Start()
+    // Start is called before the first frame update
+    void Start()
     {
         RegisterWithBitmap();
+
+        if (gameObject.transform.position == GameManager.gm.pacman.startingPos)
+        {
+            pacmanStartingTile = true;
+            Invoke(nameof(RemoveStartingTilePacmanState), 0.2f);
+
+            GameManager.gm.pacmanStateReset = () =>
+            {
+                Invoke(nameof(RemoveStartingTilePacmanState), 0.2f);
+            };
+        }
     }
 
-    protected virtual void RegisterWithBitmap()
+    private void RegisterWithBitmap()
     {
-        
-        activeBitmapCodes.Add(BitmapCode.Pellet, 0);
+        activeBitmapCodes.Add(BitmapCode.None, 0);
 
-        GameManager.gm.stateRepresentation.AddToBitmap(gameObject.transform.position, BitmapCode.Pellet);
+        GameManager.gm.stateRepresentation.AddToBitmap(gameObject.transform.position, BitmapCode.None);
     }
 
-    protected virtual void Eat()
+    // Hacky way to make sure the starting tile deregisters pacman's starting pos after game start
+    private void RemoveStartingTilePacmanState()
     {
-        activeBitmapCodes.Remove(BitmapCode.Pellet);
-        GameManager.gm.PelletEaten(this);
+        BitmapCode currentMaxBitmapCode = GetMaxCurrentStateBitmapCode();
+        GameManager.gm.stateRepresentation.DemoteStateValue(gameObject.transform.position, BitmapCode.Pacman, currentMaxBitmapCode);
+
+        Debug.Log("Updated starting tile val: " + (int)GameManager.gm.stateRepresentation.GetCurrentBitmapLocationVal(gameObject.transform.position));
     }
 
     private void OnTriggerEnter2D(Collider2D other)
@@ -59,7 +72,7 @@ public class Pellet : MonoBehaviour
                 }
                 else
                 {
-                    
+
                     if (activeBitmapCodes.Contains(BitmapCode.FrightenedGhost))
                     {
                         activeBitmapCodes[BitmapCode.FrightenedGhost] = (int)activeBitmapCodes[BitmapCode.FrightenedGhost] + 1;
@@ -91,13 +104,6 @@ public class Pellet : MonoBehaviour
         // Update bitmap with pacman code and consume pellet
         else if (other.gameObject.layer == LayerMask.NameToLayer("Pacman"))
         {
-            // Consume pellet
-            if (!eaten)
-            {
-                Eat();
-                eaten = true;
-            }
-
             activeBitmapCodes.Add(BitmapCode.Pacman, 1);
 
             GameManager.gm.stateRepresentation.UpdateStateValue(currentLocation, BitmapCode.Pacman);
@@ -126,7 +132,7 @@ public class Pellet : MonoBehaviour
                         // Used to keep track of how many duplicate bitmap states tile is in
                         int bitmapStateValCnt = (int)activeBitmapCodes[removingCode];
 
-                        // Either decrement count or remove state entirely from pellet's state tracking
+                        // Either decrement count or remove state entirely from tile's state tracking
                         if (bitmapStateValCnt > 1)
                         {
                             activeBitmapCodes[removingCode] = bitmapStateValCnt - 1;
@@ -138,7 +144,7 @@ public class Pellet : MonoBehaviour
                     }
                     else
                     {
-                        Debug.Log("Error - trying to remove non-existing pellet state");
+                        Debug.Log("Error - trying to remove non-existing tile state");
                     }
                 }
                 // Ghost is frightened but not eaten
@@ -150,7 +156,7 @@ public class Pellet : MonoBehaviour
                         // Used to keep track of how many duplicate bitmap states tile is in
                         int bitmapStateValCnt = (int)activeBitmapCodes[removingCode];
 
-                        // Either decrement count or remove state entirely from pellet's state tracking
+                        // Either decrement count or remove state entirely from tile's state tracking
                         if (bitmapStateValCnt > 1)
                         {
                             activeBitmapCodes[removingCode] = bitmapStateValCnt - 1;
@@ -162,7 +168,7 @@ public class Pellet : MonoBehaviour
                     }
                     else
                     {
-                        Debug.Log("Error - trying to remove non-existing pellet state");
+                        Debug.Log("Error - trying to remove non-existing tile state");
                     }
                 }
             }
@@ -174,7 +180,7 @@ public class Pellet : MonoBehaviour
                     // Used to keep track of how many duplicate bitmap states tile is in
                     int bitmapStateValCnt = (int)activeBitmapCodes[removingCode];
 
-                    // Either decrement count or remove state entirely from pellet's state tracking
+                    // Either decrement count or remove state entirely from tile's state tracking
                     if (bitmapStateValCnt > 1)
                     {
                         activeBitmapCodes[removingCode] = bitmapStateValCnt - 1;
@@ -186,7 +192,7 @@ public class Pellet : MonoBehaviour
                 }
                 else
                 {
-                    Debug.Log("Error - trying to remove non-existing pellet state");
+                    Debug.Log("Error - trying to remove non-existing tile state");
                 }
             }
         }
@@ -200,7 +206,7 @@ public class Pellet : MonoBehaviour
             }
             else
             {
-                Debug.Log("Error - trying to remove non-existing pellet state");
+                Debug.Log("Error - trying to remove non-existing tile state");
             }
         }
 
@@ -227,9 +233,7 @@ public class Pellet : MonoBehaviour
 
     public void Reset()
     {
-        eaten = false;
         activeBitmapCodes.Clear();
         RegisterWithBitmap();
     }
-
 }

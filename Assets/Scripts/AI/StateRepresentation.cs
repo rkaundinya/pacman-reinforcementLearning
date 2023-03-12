@@ -28,15 +28,13 @@ public class StateRepresentation : MonoBehaviour
     // Bitmap representation of game to feed RL DNN
     private Hashtable dnnBitMap;
     //Array bitmap representation (ordered)
-    private BitmapCode[] orderedBitmap;
+    private int[] orderedBitmap;
+    private Vector3 lastPacmanLoc;
 
     // Start is called before the first frame update
     void Awake()
     {
-        orderedBitmap = new BitmapCode[mapGridRows * mapGridCols];
-
-
-
+        orderedBitmap = new int[mapGridRows * mapGridCols];
         dnnBitMap = new Hashtable();
 
         tileMaps = grid.gameObject.GetComponentsInChildren<Tilemap>();
@@ -53,25 +51,8 @@ public class StateRepresentation : MonoBehaviour
                     }
 
                     Vector3 centeredPos = tileMap.GetCellCenterWorld(position);
-                    if (position == new Vector3(-14, -6, 0))
-                    {
-                        Debug.Log(centeredPos);
-                    }
-
-                    // How to convert position to flatttened array index
-                    if (centeredPos == new Vector3(-13.5f, -5.5f, 0) || centeredPos == new Vector3(-0.5f, -16.5f, 0f))
-                    {
-                        int colIdx = (int)(Mathf.Abs(centeredPos.x - gridTopLeft.x));
-                        int rowIdx = (int)(Mathf.Abs(centeredPos.y - gridTopLeft.y));
-
-                        Debug.Log("Gridmap Position: (" + rowIdx + "," + colIdx + ")");
-
-                        int bitmapIdx = (rowIdx * mapGridCols) + colIdx;
-                        Debug.Log("Bitmap Idx: " + bitmapIdx);
-                        orderedBitmap[bitmapIdx] = BitmapCode.Wall;
-                    }
-
-                    dnnBitMap.Add(tileMap.GetCellCenterWorld(position), BitmapCode.Wall);
+                    dnnBitMap.Add(centeredPos, (int)BitmapCode.Wall);
+                    UpdateOrderedBitmap(centeredPos, BitmapCode.Wall);
                 }
             }
             else
@@ -81,7 +62,7 @@ public class StateRepresentation : MonoBehaviour
         }
 
         // How to split flattened array back into row/column pairing
-        int idx = 0;
+        /*int idx = 0;
         foreach (BitmapCode code in orderedBitmap)
         {
             if (code == BitmapCode.Wall)
@@ -92,17 +73,31 @@ public class StateRepresentation : MonoBehaviour
             }
 
             idx++;
-        }
+        }*/
+    }
+
+    private void UpdateOrderedBitmap(Vector3 location, BitmapCode type)
+    {
+        int colIdx = (int)(Mathf.Abs(location.x - gridTopLeft.x));
+        int rowIdx = (int)(Mathf.Abs(location.y - gridTopLeft.y));
+
+        // Debug.Log("Gridmap Position: (" + rowIdx + "," + colIdx + ")");
+
+        int bitmapIdx = (rowIdx * mapGridCols) + colIdx;
+
+        // Debug.Log("Bitmap Idx: " + bitmapIdx);
+
+        orderedBitmap[bitmapIdx] = (int)type;
     }
 
     public BitmapCode GetCurrentBitmapLocationVal(Vector3 location)
     {
-        if (dnnBitMap.Contains(location))
-        {
-            return (BitmapCode)dnnBitMap[location];
-        }
+        int colIdx = (int)(Mathf.Abs(location.x - gridTopLeft.x));
+        int rowIdx = (int)(Mathf.Abs(location.y - gridTopLeft.y));
 
-        return BitmapCode.None;
+        int bitmapIdx = (rowIdx * mapGridCols) + colIdx;
+
+        return (BitmapCode)orderedBitmap[bitmapIdx];
     }
 
     public void AddToBitmap(Vector3 location, BitmapCode type)
@@ -110,6 +105,7 @@ public class StateRepresentation : MonoBehaviour
         if (!dnnBitMap.Contains(location))
         {
             dnnBitMap.Add(location, type);
+            UpdateOrderedBitmap(location, type);
         }
     }
 
@@ -125,6 +121,7 @@ public class StateRepresentation : MonoBehaviour
         if ((int)newVal > (int)dnnBitMap[location])
         {
             dnnBitMap[location] = newVal;
+            UpdateOrderedBitmap(location, newVal);
         }
 
         return;
@@ -141,6 +138,7 @@ public class StateRepresentation : MonoBehaviour
         if ((int)dnnBitMap[location] == (int)oldVal)
         {
             dnnBitMap[location] = newVal;
+            UpdateOrderedBitmap(location, newVal);
         }
     }
 
@@ -151,16 +149,7 @@ public class StateRepresentation : MonoBehaviour
 
     public int[] GetBitcodeMap()
     {
-        int[] toReturn = new int[dnnBitMap.Keys.Count];
-
-        int idx = 0;
-        foreach (var val in dnnBitMap.Values)
-        {
-            toReturn[idx] = (int)val;
-            idx++;
-        }
-
-        return toReturn;
+        return orderedBitmap;
     }
 
     public void DebugPrintNumStatesInBitmap()
